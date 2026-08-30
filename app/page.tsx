@@ -3,6 +3,14 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { getAllCakes, getBanners, getCategories } from "../lib/getData";
+import {
+  House,
+  Grid2x2,
+  Search,
+  Cake,
+  Gift,
+  Heart,
+} from "lucide-react";
 
 const GREEN = "#5E8F34";
 const GREY = "#6B7280";
@@ -754,42 +762,64 @@ Please share price & weight.`;
               cursor: "pointer",
             }}
           >
-            <Image src="/icons/home.png" alt="Home" width={22} height={22} />
-            <span style={{ fontSize: 11, color: GREEN }}>Home</span>
-          </div>
+           {/* FOOTER */}
+<div
+  style={{
+    position: "fixed",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    background: "#fff",
+    borderTop: "1px solid #ECECEC",
+    padding: "10px 0",
+  }}
+>
+  <div
+    style={{
+      maxWidth: 900,
+      margin: "0 auto",
+      display: "flex",
+      justifyContent: "space-around",
+    }}
+  >
+    <div
+      onClick={() => setScreen("home")}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        cursor: "pointer",
+      }}
+    >
+      <House size={22} color={GREEN} strokeWidth={2.2} />
+      <span style={{ fontSize: 11, color: GREEN }}>Home</span>
+    </div>
 
-          <div
-            onClick={() => setScreen("home")}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              cursor: "pointer",
-            }}
-          >
-            <Image
-              src="/icons/category.png"
-              alt="Category"
-              width={22}
-              height={22}
-            />
-            <span style={{ fontSize: 11, color: GREY }}>Category</span>
-          </div>
+    <div
+      onClick={() => setScreen("home")}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        cursor: "pointer",
+      }}
+    >
+      <Grid2x2 size={22} color={GREY} strokeWidth={2.2} />
+      <span style={{ fontSize: 11, color: GREY }}>Category</span>
+    </div>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <Image
-              src="/icons/search.png"
-              alt="Search"
-              width={22}
-              height={22}
-            />
-            <span style={{ fontSize: 11, color: GREY }}>Search</span>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      <Search size={22} color={GREY} strokeWidth={2.2} />
+      <span style={{ fontSize: 11, color: GREY }}>Search</span>
+    </div>
+  </div>
+</div>
           </div>
         </div>
       </div>

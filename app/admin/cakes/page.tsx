@@ -125,50 +125,41 @@ export default function CakeManager() {
       alert("Cake Updated Successfully");
       return;
     }
-setCake({
-  code: `JBF${String(nextCode).padStart(3, "0")}`,
-  name: "",
-  price: "",
-  size: "",
-  categories: [],
-  flavours: [],
-  images: [],
-});
-    try {
-      const imageUrls: string[] = [];
+    
+try {
+  const imageUrls = await Promise.all(
+    cake.images.map((file) => uploadCakeImage(file))
+  );
 
-      for (const file of cake.images) {
-        const url = await uploadCakeImage(file);
-        imageUrls.push(url);
-      }
+  await addCake({
+    code: cake.code,
+    name: cake.name,
+    startingPrice: Number(cake.price),
+    startingSize: cake.size,
+    categories: cake.categories,
+    flavours: cake.flavours,
+    images: imageUrls,
+  });
 
-      await addCake({
-  code: cake.code,
-  name: cake.name,
-  startingPrice: Number(cake.price),
-  startingSize: cake.size,
-  categories: cake.categories,
-  flavours: cake.flavours,
-  images: imageUrls,
-});
+  await loadCakes();
 
-      await loadCakes();
+  setCake({
+    code: `JBF${String(nextCode).padStart(3, "0")}`,
+    name: "",
+    price: "",
+    size: "",
+    categories: [],
+    flavours: [],
+    images: [],
+  });
 
-      alert("Cake Saved Successfully");
-    } catch (e) {
-      console.error(e);
-      alert("Upload Failed");
-    }
-setCake({
-  code: `JBF${String(nextCode).padStart(3, "0")}`,
-  name: "",
-  price: "",
-  size: "",
-  categories: [],
-  flavours: [],
-  images: [],
-});
-    setLoading(false);
+  alert("Cake Saved Successfully");
+} catch (e) {
+  console.error(e);
+  alert("Upload Failed");
+}
+
+setLoading(false);
   };
     return (
     <main
@@ -665,7 +656,6 @@ setCake({
     </main>
   );
 }
-
 const input = {
   width: "100%",
   padding: 12,
