@@ -11,13 +11,15 @@ import {
 export async function getCategories() {
   const snap = await getDocs(collection(db, "categories"));
 
-  return snap.docs.map((d) => ({
-    id: d.id,
-    ...(d.data() as {
-      name: string;
-      subs: string[];
-    }),
-  }));
+  return snap.docs.map((d) => {
+    const data = d.data() as any;
+
+    return {
+      id: d.id,
+      name: data.name || data.title || "",
+      subs: data.subs || [],
+    };
+  });
 }
 
 export async function addCategory(name: string) {
@@ -28,9 +30,7 @@ export async function addCategory(name: string) {
 }
 
 export async function addSubCategory(id: string, subs: string[]) {
-  await updateDoc(doc(db, "categories", id), {
-    subs,
-  });
+  await updateDoc(doc(db, "categories", id), { subs });
 }
 
 export async function deleteCategory(id: string) {
