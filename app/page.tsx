@@ -16,6 +16,16 @@ const GREEN = "#5E8F34";
 const GREY = "#6B7280";
 const BG = "#F8F8F6";
 const WA = "919875338544";
+const getCategoryIcon = (name: string) => {
+  const n = name.toLowerCase();
+
+  if (n.includes("birthday")) return <Cake size={28} color={GREEN} />;
+  if (n.includes("wedding")) return <Heart size={28} color={GREEN} />;
+  if (n.includes("theme")) return <Gift size={28} color={GREEN} />;
+  if (n.includes("photo")) return <Grid2x2 size={28} color={GREEN} />;
+
+  return <Cake size={28} color={GREEN} />;
+};
 
 /* =========================
    MAIN CATEGORIES
@@ -91,7 +101,7 @@ export default function Home() {
   const [categories, setCategories] = useState<any[]>([]);
   const birthdaySubs = useMemo(() => {
   const birthday = categories.find(
-    (c: any) => c.title?.toLowerCase() === "birthday"
+    (c: any) => c.name?.toLowerCase() === "birthday"
   );
 
   return birthday?.subs || [];
@@ -305,7 +315,7 @@ Please share price & weight.`;
                       setSelectedMain(cat.id);
                       setScreen("subcategory");
                     } else {
-                      setSelectedSub(cat.title);
+                      setSelectedSub(cat.name);
                       setScreen("gallery");
                     }
                   }}
@@ -329,12 +339,7 @@ Please share price & weight.`;
                       marginBottom: 14,
                     }}
                   >
-                    <Image
-                      src={`/icons/${cat.icon}.png`}
-                      alt={cat.title}
-                      width={28}
-                      height={28}
-                    />
+                    {getCategoryIcon(cat.name)}
                   </div>
 
                   <h3
@@ -344,7 +349,7 @@ Please share price & weight.`;
                       fontSize: 17,
                     }}
                   >
-                    {cat.title}
+                    {cat.name}
                   </h3>
 
                   <p
@@ -355,7 +360,7 @@ Please share price & weight.`;
                       lineHeight: 1.4,
                     }}
                   >
-                    {cat.subtitle}
+                    {cat.subs?.join(" • ")}
                   </p>
                 </div>
               ))}
