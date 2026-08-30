@@ -4,25 +4,54 @@ import {
   addDoc,
   getDocs,
   deleteDoc,
+  updateDoc,
   doc,
-  serverTimestamp,
+  query,
+  orderBy,
 } from "firebase/firestore";
 
-export async function addBanner(data: any) {
-  await addDoc(collection(db, "banners"), {
-    ...data,
-    createdAt: serverTimestamp(),
-  });
-}
+export type Banner = {
+  id?: string;
+  title: string;
+  image: string;
+  active: boolean;
+  createdAt?: number;
+};
 
+// Get all banners
 export async function getBanners() {
-  const snap = await getDocs(collection(db, "banners"));
+  const q = query(
+    collection(db, "banners"),
+    orderBy("createdAt", "desc")
+  );
+
+  const snap = await getDocs(q);
+
   return snap.docs.map((d) => ({
     id: d.id,
-    ...d.data(),
+    ...(d.data() as Banner),
   }));
 }
 
+// Add banner
+export async function addBanner(banner: Omit<Banner, "id">) {
+  await addDoc(collection(db, "banners"), {
+    ...banner,
+    createdAt: Date.now(),
+  });
+}
+
+// Active / Hide
+export async function updateBanner(
+  id: string,
+  active: boolean
+) {
+  await updateDoc(doc(db, "banners", id), {
+    active,
+  });
+}
+
+// Delete
 export async function deleteBanner(id: string) {
   await deleteDoc(doc(db, "banners", id));
 }
