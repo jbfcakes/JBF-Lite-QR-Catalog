@@ -11,6 +11,7 @@ const cards = [
   { title: "Banners", value: "3", color: "#EEF6E7" },
   { title: "Categories", value: "6", color: "#EEF6E7" },
   { title: "Cakes", value: "128", color: "#EEF6E7" },
+  { title: "Flavours", value: "12", color: "#EEF6E7" },
   { title: "QR Visits", value: "2.1K", color: "#EEF6E7" },
 ];
 
@@ -127,6 +128,9 @@ export default function Dashboard() {
 
           <Link href="/admin/cakes" style={menu}>
             Cake Manager
+          </Link>
+          <Link href="/admin/flavours" style={menu}>
+            Flavours
           </Link>
 
           <div
@@ -263,6 +267,9 @@ export default function Dashboard() {
 
               <Link href="/admin/cakes" style={btn}>
                 + Add Cake
+              </Link>
+              <Link href="/admin/flavours" style={btn}>
+                + Add Flavour
               </Link>
             </div>
           </div>
