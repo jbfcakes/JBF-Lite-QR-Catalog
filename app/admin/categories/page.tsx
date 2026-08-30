@@ -13,7 +13,8 @@ const GREY = "#6B7280";
 
 type Category = {
   id: string;
-  name: string;
+  name?: string;
+  title?: string;
   subs: string[];
 };
 
@@ -130,7 +131,7 @@ export default function CategoryManager() {
                   alignItems: "center",
                 }}
               >
-                <h2 style={{ margin: 0, color: GREEN }}>{cat.name}</h2>
+                <h2 style={{ margin: 0, color: GREEN }}>{cat.name || cat.title}</h2>
 
                 <button
                   onClick={() => removeCategory(cat.id)}

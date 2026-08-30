@@ -346,7 +346,7 @@ Please share price & weight.`;
                       marginBottom: 14,
                     }}
                   >
-                    {getCategoryIcon(cat.name)}
+                    {getCategoryIcon(cat.name || cat.title)}
                   </div>
 
                   <h3
@@ -356,7 +356,7 @@ Please share price & weight.`;
                       fontSize: 17,
                     }}
                   >
-                    {cat.name}
+                    {cat.name || cat.title}
                   </h3>
 
                   <p
@@ -367,7 +367,7 @@ Please share price & weight.`;
                       lineHeight: 1.4,
                     }}
                   >
-                    {cat.subs?.join(" • ")}
+                    {cat.subs?.length ? cat.subs.join(" • ") : "Premium Collection"}
                   </p>
                 </div>
               ))}
