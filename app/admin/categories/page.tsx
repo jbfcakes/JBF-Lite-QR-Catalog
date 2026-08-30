@@ -13,7 +13,7 @@ const GREY = "#6B7280";
 
 type Category = {
   id: string;
-  title: string;
+  name: string;
   subs: string[];
 };
 
@@ -35,7 +35,6 @@ export default function CategoryManager() {
     if (!newCategory.trim()) return;
 
     await addCategory(newCategory);
-
     setNewCategory("");
     loadCategories();
   }
@@ -47,9 +46,7 @@ export default function CategoryManager() {
     const cat = categories.find((c) => c.id === id);
     if (!cat) return;
 
-    const updated = [...cat.subs, value];
-
-    await addSubCategory(id, updated);
+    await addSubCategory(id, [...cat.subs, value]);
 
     setSubInput({ ...subInput, [id]: "" });
     loadCategories();
@@ -75,8 +72,6 @@ export default function CategoryManager() {
         <p style={{ color: GREY }}>
           Unlimited Categories & Sub Categories
         </p>
-
-        {/* ADD CATEGORY */}
 
         <div
           style={{
@@ -117,8 +112,6 @@ export default function CategoryManager() {
           </button>
         </div>
 
-        {/* CATEGORY LIST */}
-
         <div style={{ marginTop: 28 }}>
           {categories.map((cat) => (
             <div
@@ -137,9 +130,7 @@ export default function CategoryManager() {
                   alignItems: "center",
                 }}
               >
-                <h2 style={{ margin: 0, color: GREEN }}>
-                  {cat.title}
-                </h2>
+                <h2 style={{ margin: 0, color: GREEN }}>{cat.name}</h2>
 
                 <button
                   onClick={() => removeCategory(cat.id)}
@@ -155,8 +146,6 @@ export default function CategoryManager() {
                   Delete
                 </button>
               </div>
-
-              {/* SUB CATEGORIES */}
 
               <div
                 style={{
@@ -180,8 +169,6 @@ export default function CategoryManager() {
                   </div>
                 ))}
               </div>
-
-              {/* ADD SUB */}
 
               <div
                 style={{
