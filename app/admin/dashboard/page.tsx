@@ -2,20 +2,49 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { db } from "../../../lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
 
 const GREEN = "#5E8F34";
 const GREY = "#6B7280";
 const BG = "#F8F8F6";
 
-const cards = [
-  { title: "Banners", value: "3", color: "#EEF6E7" },
-  { title: "Categories", value: "6", color: "#EEF6E7" },
-  { title: "Cakes", value: "128", color: "#EEF6E7" },
-  { title: "Flavours", value: "12", color: "#EEF6E7" },
-  { title: "QR Visits", value: "2.1K", color: "#EEF6E7" },
-];
-
 export default function Dashboard() {
+  const [stats, setStats] = useState({
+    banners: 0,
+    categories: 0,
+    cakes: 0,
+    flavours: 0,
+  });
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  async function loadStats() {
+    const [banners, categories, cakes, flavours] = await Promise.all([
+      getDocs(collection(db, "banners")),
+      getDocs(collection(db, "categories")),
+      getDocs(collection(db, "cakes")),
+      getDocs(collection(db, "flavours")),
+    ]);
+
+    setStats({
+      banners: banners.size,
+      categories: categories.size,
+      cakes: cakes.size,
+      flavours: flavours.size,
+    });
+  }
+
+  const cards = [
+    { title: "Banners", value: stats.banners },
+    { title: "Categories", value: stats.categories },
+    { title: "Cakes", value: stats.cakes },
+    { title: "Flavours", value: stats.flavours },
+  ];
+
   return (
     <main
       style={{
@@ -34,18 +63,9 @@ export default function Dashboard() {
           alignItems: "center",
           justifyContent: "space-between",
           padding: "0 22px",
-          position: "sticky",
-          top: 0,
-          zIndex: 20,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Image
             src="/logo.jpeg"
             alt="JBF"
@@ -55,23 +75,8 @@ export default function Dashboard() {
           />
 
           <div>
-            <h2
-              style={{
-                margin: 0,
-                color: GREEN,
-                fontSize: 22,
-              }}
-            >
-              JBF Admin
-            </h2>
-
-            <p
-              style={{
-                margin: 0,
-                color: GREY,
-                fontSize: 13,
-              }}
-            >
+            <h2 style={{ margin: 0, color: GREEN }}>JBF Admin</h2>
+            <p style={{ margin: 0, color: GREY, fontSize: 13 }}>
               Catalog Dashboard
             </p>
           </div>
@@ -104,15 +109,7 @@ export default function Dashboard() {
             padding: 18,
           }}
         >
-          <p
-            style={{
-              color: "#9CA3AF",
-              fontSize: 12,
-              marginBottom: 14,
-            }}
-          >
-            MAIN MENU
-          </p>
+          <p style={{ color: "#9CA3AF", fontSize: 12 }}>MAIN MENU</p>
 
           <Link href="/admin/dashboard" style={menuActive}>
             Dashboard
@@ -126,29 +123,21 @@ export default function Dashboard() {
             Categories
           </Link>
 
-          <Link href="/admin/cakes" style={menu}>
-            Cake Manager
-          </Link>
           <Link href="/admin/flavours" style={menu}>
             Flavours
           </Link>
 
+          <Link href="/admin/cakes" style={menu}>
+            Cake Manager
+          </Link>
+
           <div
             style={{
-              marginTop: 28,
-              paddingTop: 18,
+              marginTop: 30,
               borderTop: "1px solid #F1F1F1",
+              paddingTop: 18,
             }}
           >
-            <p
-              style={{
-                color: "#9CA3AF",
-                fontSize: 12,
-              }}
-            >
-              ACCOUNT
-            </p>
-
             <Link href="/admin/login" style={menu}>
               Logout
             </Link>
@@ -157,31 +146,21 @@ export default function Dashboard() {
 
         {/* CONTENT */}
         <section style={{ padding: 24 }}>
-          <h1
-            style={{
-              marginTop: 0,
-              color: GREEN,
-              fontSize: 30,
-            }}
-          >
+          <h1 style={{ color: GREEN, marginTop: 0 }}>
             Welcome 👋
           </h1>
 
-          <p
-            style={{
-              color: GREY,
-              marginBottom: 24,
-            }}
-          >
-            Manage banners, categories and cake catalog.
+          <p style={{ color: GREY }}>
+            Real-time Firestore Dashboard
           </p>
 
-          {/* STATS */}
+          {/* REAL STATS */}
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
               gap: 18,
+              marginTop: 24,
             }}
           >
             {cards.map((card) => (
@@ -198,8 +177,8 @@ export default function Dashboard() {
                   style={{
                     width: 48,
                     height: 48,
-                    borderRadius: 14,
-                    background: card.color,
+                    borderRadius: 12,
+                    background: "#EEF6E7",
                     display: "grid",
                     placeItems: "center",
                     color: GREEN,
@@ -219,12 +198,7 @@ export default function Dashboard() {
                   {card.value}
                 </h2>
 
-                <p
-                  style={{
-                    margin: 0,
-                    color: GREY,
-                  }}
-                >
+                <p style={{ margin: 0, color: GREY }}>
                   {card.title}
                 </p>
               </div>
@@ -240,41 +214,37 @@ export default function Dashboard() {
               padding: 22,
             }}
           >
-            <h2
-              style={{
-                color: GREEN,
-                marginTop: 0,
-              }}
-            >
+            <h2 style={{ color: GREEN, marginTop: 0 }}>
               Quick Actions
             </h2>
 
             <div
               style={{
                 display: "flex",
-                gap: 14,
+                gap: 12,
                 flexWrap: "wrap",
-                marginTop: 18,
+                marginTop: 16,
               }}
             >
               <Link href="/admin/banners" style={btn}>
-                + Add Banner
+                + Banner
               </Link>
 
               <Link href="/admin/categories" style={btn}>
-                + New Category
+                + Category
+              </Link>
+
+              <Link href="/admin/flavours" style={btn}>
+                + Flavour
               </Link>
 
               <Link href="/admin/cakes" style={btn}>
-                + Add Cake
-              </Link>
-              <Link href="/admin/flavours" style={btn}>
-                + Add Flavour
+                + Cake
               </Link>
             </div>
           </div>
 
-          {/* RECENT */}
+          {/* LIVE SUMMARY */}
           <div
             style={{
               marginTop: 30,
@@ -283,28 +253,30 @@ export default function Dashboard() {
               padding: 22,
             }}
           >
-            <h2
-              style={{
-                color: GREEN,
-                marginTop: 0,
-              }}
-            >
-              Recent Activity
+            <h2 style={{ color: GREEN, marginTop: 0 }}>
+              Store Summary
             </h2>
 
-            <table style={{ width: "100%", marginTop: 14 }}>
+            <table style={{ width: "100%", marginTop: 12 }}>
               <tbody>
                 <tr>
-                  <td style={td}>JBF001 Added</td>
-                  <td style={td}>Today</td>
+                  <td style={td}>Total Cakes</td>
+                  <td style={td}>{stats.cakes}</td>
                 </tr>
+
                 <tr>
-                  <td style={td}>Wedding Banner Updated</td>
-                  <td style={td}>Today</td>
+                  <td style={td}>Categories</td>
+                  <td style={td}>{stats.categories}</td>
                 </tr>
+
                 <tr>
-                  <td style={td}>Birthday Category Edited</td>
-                  <td style={td}>Yesterday</td>
+                  <td style={td}>Flavours</td>
+                  <td style={td}>{stats.flavours}</td>
+                </tr>
+
+                <tr>
+                  <td style={td}>Active Banners</td>
+                  <td style={td}>{stats.banners}</td>
                 </tr>
               </tbody>
             </table>

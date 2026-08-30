@@ -1,6 +1,6 @@
 "use client";
 import { addBanner } from "../../../lib/banners";
-import { uploadCakeImage } from "../../../lib/storage";
+import { uploadBannerImage } from "../../../lib/storage";
 import { useState } from "react";
 
 const GREEN = "#5E8F34";
@@ -21,7 +21,7 @@ export default function BannerManager() {
  const addNewBanner = async () => {
   if (!title || !image) return;
 
-  const url = await uploadCakeImage(image);
+  const url = await uploadBannerImage(image);
 
   await addBanner({
     title,

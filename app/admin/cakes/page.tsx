@@ -123,7 +123,9 @@ async function loadFlavours() {
     
 try {
   const imageUrls = await Promise.all(
-    cake.images.map((file) => uploadCakeImage(file))
+    cake.images.map((file, index) =>
+  uploadCakeImage(file, cake.code, index)
+)
   );
 
   await addCake({
