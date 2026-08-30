@@ -144,7 +144,14 @@ async function loadBanners() {
 }
 async function loadCategories() {
   const data = await getCategories();
-  setCategories(data);
+
+  setCategories(
+    data.map((c: any) => ({
+      ...c,
+      name: c.name || c.title || "",
+      subs: c.subs || [],
+    }))
+  );
 }
 
   const list = useMemo(() => {
