@@ -13,13 +13,16 @@ export async function getCategories() {
 
   return snap.docs.map((d) => ({
     id: d.id,
-    ...d.data(),
+    ...(d.data() as {
+      name: string;
+      subs: string[];
+    }),
   }));
 }
 
-export async function addCategory(title: string) {
+export async function addCategory(name: string) {
   await addDoc(collection(db, "categories"), {
-    title,
+    name,
     subs: [],
   });
 }
