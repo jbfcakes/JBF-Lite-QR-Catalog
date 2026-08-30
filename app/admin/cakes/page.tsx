@@ -9,6 +9,8 @@ import {
   updateCake,
 } from "../../../lib/cakes";
 import { uploadCakeImage } from "../../../lib/storage";
+import { getFlavours } from "../../../lib/flavours";
+import { getCategories } from "../../../lib/categories";
 
 const GREEN = "#5E8F34";
 const GREY = "#6B7280";
@@ -24,33 +26,15 @@ type Cake = {
   images: File[];
 };
 
-const allCategories = [
-  "Birthday Boy",
-  "Birthday Girl",
-  "Birthday Men",
-  "Birthday Women",
-  "Birthday Kids",
-  "Wedding",
-  "Theme Cake",
-  "Trending",
-];
-
-const allFlavours = [
-  "Chocolate",
-  "Vanilla",
-  "Red Velvet",
-  "Oreo",
-  "Butterscotch",
-  "Rasmalai",
-  "Blueberry",
-  "Pineapple",
-];
 
 export default function CakeManager() {
   const [cakes, setCakes] = useState<any[]>([]);
   const [nextCode, setNextCode] = useState(1);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [allCategories, setAllCategories] = useState<string[]>([]);
+  const [allFlavours, setAllFlavours] = useState<string[]>([]);
+
 
   const [cake, setCake] = useState<Cake>({
     code: "JBF001",
@@ -63,8 +47,10 @@ export default function CakeManager() {
   });
 
   useEffect(() => {
-    loadCakes();
-  }, []);
+  loadCakes();
+  loadCategories();
+  loadFlavours();
+}, []);
 
   async function loadCakes() {
     const data = await getCakes();
@@ -80,6 +66,15 @@ export default function CakeManager() {
       code: `JBF${String(next).padStart(3, "0")}`,
     }));
   }
+  async function loadCategories() {
+  const data = await getCategories();
+  setAllCategories(data.map((c: any) => c.name || c.title));
+}
+
+async function loadFlavours() {
+  const data = await getFlavours();
+  setAllFlavours(data.map((f: any) => f.name));
+}
 
   const toggleCategory = (cat: string) => {
     setCake({
