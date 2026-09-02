@@ -1,5 +1,10 @@
 import { storage } from "./firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 
 async function convertToWebP(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -14,9 +19,25 @@ async function convertToWebP(file: File): Promise<Blob> {
 
       if (!ctx) return reject("Canvas Error");
 
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
+      const MAX = 1200;
+
+      let w = img.width;
+      let h = img.height;
+
+      if (w > h && w > MAX) {
+        h *= MAX / w;
+        w = MAX;
+      }
+
+      if (h > w && h > MAX) {
+        w *= MAX / h;
+        h = MAX;
+      }
+
+      canvas.width = w;
+      canvas.height = h;
+
+      ctx.drawImage(img, 0, 0, w, h);
 
       canvas.toBlob(
         (blob) => {
@@ -34,7 +55,10 @@ async function convertToWebP(file: File): Promise<Blob> {
   });
 }
 
-// Cake Images
+/* ===========================
+   CAKE IMAGES
+=========================== */
+
 export async function uploadCakeImage(
   file: File,
   cakeCode: string,
@@ -42,9 +66,16 @@ export async function uploadCakeImage(
 ) {
   const webp = await convertToWebP(file);
 
+  // First image = JBF001.webp
+  // Second image (if any) = JBF001-02.webp
+  const fileName =
+    index === 0
+      ? `${cakeCode}.webp`
+      : `${cakeCode}-${String(index + 1).padStart(2, "0")}.webp`;
+
   const storageRef = ref(
     storage,
-    `cakes/${cakeCode}-${String(index + 1).padStart(2, "0")}.webp`
+    `JbfCakes/${cakeCode}/${fileName}`
   );
 
   await uploadBytes(storageRef, webp, {
@@ -54,7 +85,10 @@ export async function uploadCakeImage(
   return await getDownloadURL(storageRef);
 }
 
-// Banner Images
+/* ===========================
+   BANNER IMAGES
+=========================== */
+
 export async function uploadBannerImage(file: File) {
   const webp = await convertToWebP(file);
 
@@ -68,4 +102,20 @@ export async function uploadBannerImage(file: File) {
   });
 
   return await getDownloadURL(storageRef);
+}
+
+export async function deleteCakeImage(
+  imageUrl: string
+) {
+  try {
+    const path = decodeURIComponent(
+      imageUrl.split("/o/")[1].split("?")[0]
+    );
+
+    const imageRef = ref(storage, path);
+
+    await deleteObject(imageRef);
+  } catch (error) {
+    console.log("Image already deleted");
+  }
 }

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const GREEN = "#5E8F34";
 const GREY = "#6B7280";
@@ -9,14 +10,18 @@ const GREY = "#6B7280";
 export default function AdminLogin() {
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
+  const router = useRouter();
 
   const handleLogin = () => {
-    if (user === "admin" && pass === "1234") {
-      window.location.href = "/admin/dashboard";
-    } else {
-      alert("Invalid Username or Password");
-    }
-  };
+  if (user === "admin" && pass === "1234") {
+    document.cookie =
+      "jbf_admin=logged_in; path=/; max-age=86400";
+
+    router.push("/admin/dashboard");
+  } else {
+    alert("Invalid Username or Password");
+  }
+};
 
   return (
     <main

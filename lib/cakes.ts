@@ -1,39 +1,93 @@
 import { db } from "./firebase";
-
 import {
   collection,
   addDoc,
   getDocs,
+  getDoc,
   deleteDoc,
   doc,
-  serverTimestamp,
+  setDoc,
   query,
   orderBy,
   limit,
-  setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 
-export async function addCake(data: any) {
+export type Cake = {
+  id?: string;
+  code: string;
+  name: string;
+  images: string[];
+  categories: string[];
+  subCategories: string[];
+  flavours: string[];
+  startingPrice: number;
+  minWeight: string;
+  serving: string;
+  active: boolean;
+  keywords: string[];
+};
+
+function generateKeywords(data: Cake) {
+  const words = [
+    data.name,
+    ...data.categories,
+    ...data.subCategories,
+  ]
+    .join(" ")
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 1);
+
+  return [...new Set(words)];
+}
+
+export async function addCake(data: Cake) {
   await addDoc(collection(db, "cakes"), {
     ...data,
+    keywords: generateKeywords(data),
     createdAt: serverTimestamp(),
   });
 }
 
 export async function getCakes() {
-  const snap = await getDocs(collection(db, "cakes"));
+  const q = query(
+    collection(db, "cakes"),
+    orderBy("createdAt", "desc")
+  );
+
+  const snap = await getDocs(q);
 
   return snap.docs.map((d) => ({
     id: d.id,
-    ...d.data(),
+    ...(d.data() as Cake),
   }));
+}
+
+export async function getCakeById(id: string) {
+  const snap = await getDoc(doc(db, "cakes", id));
+
+  return {
+    id: snap.id,
+    ...(snap.data() as Cake),
+  };
+}
+
+export async function updateCake(
+  id: string,
+  data: Partial<Cake>
+) {
+  await setDoc(doc(db, "cakes", id), data, {
+    merge: true,
+  });
 }
 
 export async function deleteCake(id: string) {
   await deleteDoc(doc(db, "cakes", id));
 }
 
-export async function getLastCakeCode() {
+export async function getNextCakeCode() {
   const q = query(
     collection(db, "cakes"),
     orderBy("code", "desc"),
@@ -42,11 +96,23 @@ export async function getLastCakeCode() {
 
   const snap = await getDocs(q);
 
-  if (snap.empty) return "JBF000";
+  if (snap.empty) return "JBF001";
 
-  return snap.docs[0].data().code as string;
+  const last = snap.docs[0].data().code as string;
+
+  const num = Number(last.replace("JBF", ""));
+
+  return `JBF${String(num + 1).padStart(3, "0")}`;
 }
 
-export async function updateCake(id: string, data: any) {
-  await setDoc(doc(db, "cakes", id), data, { merge: true });
+export async function duplicateCake(cake: Cake) {
+  const code = await getNextCakeCode();
+
+  await addCake({
+    ...cake,
+    code,
+    name: `${cake.name} Copy`,
+  });
+
+  return code;
 }

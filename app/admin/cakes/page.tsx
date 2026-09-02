@@ -1,663 +1,690 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import {
-  addCake,
+  Search,
+  Pencil,
+  Trash2,
+  Plus,
+  Filter,
+  Copy,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+
+import {
   getCakes,
   deleteCake,
-  getLastCakeCode,
+  duplicateCake,
   updateCake,
 } from "../../../lib/cakes";
-import { uploadCakeImage } from "../../../lib/storage";
-import { getFlavours } from "../../../lib/flavours";
+
 import { getCategories } from "../../../lib/categories";
 
 const GREEN = "#5E8F34";
+const BG = "#F8F8F6";
 const GREY = "#6B7280";
 
 type Cake = {
-  id?: string;
+  id: string;
   code: string;
   name: string;
-  price: string;
-  size: string;
+  images: string[];
+
   categories: string[];
+  subCategories: string[];
   flavours: string[];
-  images: File[];
+
+  startingPrice: number;
+  minWeight: string;
+  serving: string;
+
+  active: boolean;
 };
 
+type Category = {
+  id: string;
+  name: string;
+  subs: string[];
+};
 
 export default function CakeManager() {
-  const [cakes, setCakes] = useState<any[]>([]);
-  const [nextCode, setNextCode] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [allCategories, setAllCategories] = useState<string[]>([]);
-  const [allFlavours, setAllFlavours] = useState<string[]>([]);
+  const [cakes, setCakes] = useState<Cake[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
+  const [search, setSearch] = useState("");
 
-  const [cake, setCake] = useState<Cake>({
-    code: "JBF001",
-    name: "",
-    price: "",
-    size: "",
-    categories: [],
-    flavours: [],
-    images: [],
-  });
+  const [mainCategory, setMainCategory] =
+    useState("All");
 
+  const [subCategory, setSubCategory] =
+    useState("All");
+const [loadingId, setLoadingId] = useState("");
   useEffect(() => {
-  loadCakes();
-  loadCategories();
-  loadFlavours();
-}, []);
+    loadData();
+  }, []);
 
-  async function loadCakes() {
-    const data = await getCakes();
-    setCakes(data);
+  async function loadData() {
+  const all = (await getCakes()) as Cake[];
+  const cats = (await getCategories()) as Category[];
 
-    const last = await getLastCakeCode();
-    const next = Number(last.replace("JBF", "")) + 1;
+  setCakes(all);
+  setCategories(cats);
+}
 
-    setNextCode(next);
+  async function removeCake(id: string) {
+    const ok = confirm("Delete this cake?");
 
-    setCake((prev) => ({
-      ...prev,
-      code: `JBF${String(next).padStart(3, "0")}`,
-    }));
+    if (!ok) return;
+
+    await deleteCake(id);
+
+    loadData();
   }
-  async function loadCategories() {
-  const data = await getCategories();
-  setAllCategories(data.map((c: any) => c.name || c.title));
-}
+async function toggleActive(cake: Cake) {
+  setLoadingId(cake.id);
 
-async function loadFlavours() {
-  const data = await getFlavours();
-  setAllFlavours(data.map((f: any) => f.name));
-}
-
-  const toggleCategory = (cat: string) => {
-    setCake({
-      ...cake,
-      categories: cake.categories.includes(cat)
-        ? cake.categories.filter((c) => c !== cat)
-        : [...cake.categories, cat],
-    });
-  };
-
-  const toggleFlavour = (f: string) => {
-    setCake({
-      ...cake,
-      flavours: cake.flavours.includes(f)
-        ? cake.flavours.filter((x) => x !== f)
-        : [...cake.flavours, f],
-    });
-  };
-
-  const saveCake = async () => {
-    if (!cake.name) {
-      alert("Enter Cake Name");
-      return;
-    }
-
-    setLoading(true);
-
-    // EDIT MODE
-    if (editingId) {
-      await updateCake(editingId, {
-        code: cake.code,
-        name: cake.name,
-        startingPrice: Number(cake.price),
-        startingSize: cake.size,
-        categories: cake.categories,
-        flavours: cake.flavours,
-      });
-
-      setEditingId(null);
-      await loadCakes();
-      setLoading(false);
-
-      alert("Cake Updated Successfully");
-      return;
-    }
-    
-try {
-  const imageUrls = await Promise.all(
-    cake.images.map((file, index) =>
-  uploadCakeImage(file, cake.code, index)
-)
-  );
-
-  await addCake({
-    code: cake.code,
-    name: cake.name,
-    startingPrice: Number(cake.price),
-    startingSize: cake.size,
-    categories: cake.categories,
-    flavours: cake.flavours,
-    images: imageUrls,
+  await updateCake(cake.id, {
+    active: !cake.active,
   });
 
-  await loadCakes();
-
-  setCake({
-    code: `JBF${String(nextCode).padStart(3, "0")}`,
-    name: "",
-    price: "",
-    size: "",
-    categories: [],
-    flavours: [],
-    images: [],
-  });
-
-  alert("Cake Saved Successfully");
-} catch (e) {
-  console.error(e);
-  alert("Upload Failed");
+  await loadData();
+  setLoadingId("");
 }
+  const currentSubs = useMemo(() => {
+    if (mainCategory === "All") return [];
 
-setLoading(false);
-  };
-    return (
+    const cat = categories.find(
+      (c) => c.name === mainCategory
+    );
+
+    return cat?.subs || [];
+  }, [mainCategory, categories]);
+async function copyCake(cake: Cake) {
+  setLoadingId(cake.id);
+
+  await duplicateCake(cake);
+
+  await loadData();
+
+  setLoadingId("");
+  alert("Cake duplicated successfully");
+}
+  const filtered = useMemo(() => {
+    return cakes.filter((cake) => {
+      const codeMatch =
+        cake.code
+          .toLowerCase()
+          .includes(search.toLowerCase()) ||
+        cake.name
+          .toLowerCase()
+          .includes(search.toLowerCase());
+
+      const mainMatch =
+        mainCategory === "All" ||
+        cake.categories.includes(mainCategory);
+
+      const subMatch =
+        subCategory === "All" ||
+        cake.subCategories.includes(subCategory);
+
+      return codeMatch && mainMatch && subMatch;
+    });
+  }, [
+    cakes,
+    search,
+    mainCategory,
+    subCategory,
+  ]);
+
+  return (
     <main
       style={{
-        background: "#F8F8F6",
+        background: BG,
         minHeight: "100vh",
-        padding: 24,
-        fontFamily: "sans-serif",
+        padding: 20,
       }}
     >
-      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <h1 style={{ color: GREEN }}>Cake Manager</h1>
+      <div
+        style={{
+          maxWidth: 1400,
+          margin: "0 auto",
+        }}
+      >
+        {/* HEADER */}
 
-        <p style={{ color: GREY }}>
-          Add Unlimited Cake Designs
-        </p>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 22,
+          }}
+        >
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                color: GREEN,
+                fontSize: 30,
+              }}
+            >
+              Cake Manager
+            </h1>
+
+            <p
+              style={{
+                color: GREY,
+                marginTop: 4,
+              }}
+            >
+              Search, Edit & Delete Cakes
+            </p>
+          </div>
+
+          <Link
+            href="/admin/bulk-upload"
+            style={{
+              textDecoration: "none",
+              background: GREEN,
+              color: "#fff",
+              padding: "12px 18px",
+              borderRadius: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontWeight: 700,
+            }}
+          >
+            <Plus size={18} />
+            Bulk Upload
+          </Link>
+        </div>
+
+        {/* SEARCH */}
 
         <div
           style={{
             background: "#fff",
-            borderRadius: 22,
-            padding: 22,
-            marginTop: 24,
+            borderRadius: 16,
+            padding: 14,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 18,
           }}
         >
-          <h2 style={{ color: GREEN }}>Cake Details</h2>
-
-          <label style={{ color: GREY }}>Design Code</label>
+          <Search color={GREY} size={20} />
 
           <input
-            value={cake.code}
-            readOnly
+            placeholder="Search JBF001 or Cake Name..."
+            value={search}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
             style={{
-              ...input,
-              background: "#F3F4F6",
-              color: GREEN,
-              fontWeight: 700,
+              flex: 1,
+              border: "none",
+              outline: "none",
+              fontSize: 15,
             }}
           />
+        </div>
 
-          <label style={{ color: GREY, marginTop: 16, display: "block" }}>
-            Cake Name
-          </label>
+        {/* FILTER BAR */}
 
-          <input
-            placeholder="Spider Theme Cake"
-            value={cake.name}
-            onChange={(e) =>
-              setCake({
-                ...cake,
-                name: e.target.value,
-              })
-            }
-            style={input}
-          />
-
-          <div style={{ display: "flex", gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ color: GREY }}>Starting Price</label>
-
-              <input
-                placeholder="699"
-                value={cake.price}
-                onChange={(e) =>
-                  setCake({
-                    ...cake,
-                    price: e.target.value,
-                  })
-                }
-                style={input}
-              />
-            </div>
-
-            <div style={{ flex: 1 }}>
-              <label style={{ color: GREY }}>Starting Size</label>
-
-              <input
-                placeholder="0.5 KG"
-                value={cake.size}
-                onChange={(e) =>
-                  setCake({
-                    ...cake,
-                    size: e.target.value,
-                  })
-                }
-                style={input}
-              />
-            </div>
-          </div>
-
-          {/* IMAGE UPLOAD */}
-
-          <h3 style={{ marginTop: 22, color: GREEN }}>
-            Cake Images
-          </h3>
-
-          <label
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: 16,
+            padding: 16,
+            marginBottom: 20,
+          }}
+        >
+          <div
             style={{
-              display: "block",
-              border: "2px dashed #5E8F34",
-              borderRadius: 16,
-              padding: 20,
-              textAlign: "center",
-              background: "#F8FFF4",
-              cursor: "pointer",
-              marginTop: 10,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 14,
             }}
           >
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              style={{ display: "none" }}
-              onChange={(e) =>
-                setCake({
-                  ...cake,
-                  images: Array.from(e.target.files || []),
-                })
-              }
+            <Filter
+              color={GREEN}
+              size={18}
             />
 
-            <div
-              style={{
-                fontSize: 15,
-                color: GREEN,
-                fontWeight: 700,
-              }}
-            >
-              Choose Multiple Images
-            </div>
+            <strong>Category Filter</strong>
+          </div>
 
-            <div
-              style={{
-                fontSize: 13,
-                color: GREY,
-                marginTop: 6,
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              onClick={() => {
+                setMainCategory("All");
+                setSubCategory("All");
               }}
+              style={chip(mainCategory === "All")}
             >
-              Upload up to 10 cake photos
-            </div>
-          </label>
+              All
+            </button>
 
-          {cake.images.length > 0 && (
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => {
+                  setMainCategory(cat.name);
+                  setSubCategory("All");
+                }}
+                style={chip(
+                  mainCategory === cat.name
+                )}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+
+          {currentSubs.length > 0 && (
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3,1fr)",
-                gap: 10,
+                display: "flex",
+                gap: 8,
+                flexWrap: "wrap",
                 marginTop: 16,
               }}
             >
-              {cake.images.map((img, i) => (
-                <div
-                  key={i}
-                  style={{
-                    position: "relative",
-                    aspectRatio: "1/1",
-                    borderRadius: 12,
-                    overflow: "hidden",
-                  }}
-                >
-                  <img
-                    src={URL.createObjectURL(img)}
-                    alt=""
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
+              <button
+                onClick={() =>
+                  setSubCategory("All")
+                }
+                style={subChip(
+                  subCategory === "All"
+                )}
+              >
+                All
+              </button>
 
-                  <button
-                    onClick={() =>
-                      setCake({
-                        ...cake,
-                        images: cake.images.filter((_, x) => x !== i),
-                      })
-                    }
-                    style={{
-                      position: "absolute",
-                      top: 6,
-                      right: 6,
-                      width: 24,
-                      height: 24,
-                      borderRadius: "50%",
-                      border: "none",
-                      background: "rgba(0,0,0,.65)",
-                      color: "#fff",
-                      cursor: "pointer",
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
+              {currentSubs.map((sub) => (
+                <button
+                  key={sub}
+                  onClick={() =>
+                    setSubCategory(sub)
+                  }
+                  style={subChip(
+                    subCategory === sub
+                  )}
+                >
+                  {sub}
+                </button>
               ))}
             </div>
           )}
-
-          {/* CATEGORIES */}
-
-          <h3 style={{ marginTop: 26, color: GREEN }}>
-            Categories
-          </h3>
-
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 8,
-              marginTop: 10,
-            }}
-          >
-            {allCategories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => toggleCategory(cat)}
-                style={{
-                  border: "none",
-                  borderRadius: 999,
-                  padding: "10px 14px",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  background: cake.categories.includes(cat)
-                    ? GREEN
-                    : "#EEF6E7",
-                  color: cake.categories.includes(cat)
-                    ? "#fff"
-                    : GREEN,
-                }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          {/* FLAVOURS */}
-
-          <h3 style={{ marginTop: 24, color: GREEN }}>
-            Available Flavours
-          </h3>
-
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 8,
-              marginTop: 10,
-            }}
-          >
-            {allFlavours.map((f) => (
-              <button
-                key={f}
-                onClick={() => toggleFlavour(f)}
-                style={{
-                  border: "none",
-                  borderRadius: 999,
-                  padding: "10px 14px",
-                  cursor: "pointer",
-                  background: cake.flavours.includes(f)
-                    ? GREEN
-                    : "#F3F4F6",
-                  color: cake.flavours.includes(f)
-                    ? "#fff"
-                    : GREY,
-                }}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={saveCake}
-            disabled={loading}
-            style={{
-              width: "100%",
-              marginTop: 28,
-              padding: 15,
-              border: "none",
-              borderRadius: 14,
-              background: loading ? "#9CA3AF" : GREEN,
-              color: "#fff",
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            {loading
-              ? "Uploading..."
-              : editingId
-              ? "Update Cake"
-              : "Save Cake"}
-          </button>
         </div>
-                {/* SAVED CAKES */}
 
-        <h2
+        {/* GRID STARTS HERE */}
+                {/* RESULT COUNT */}
+
+        <div
           style={{
-            marginTop: 30,
-            color: GREEN,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 14,
           }}
         >
-          Saved Cakes ({cakes.length})
-        </h2>
+          <h2
+            style={{
+              margin: 0,
+              color: GREEN,
+              fontSize: 20,
+            }}
+          >
+            Saved Cakes
+          </h2>
 
-        {cakes.map((item) => (
           <div
-            key={item.id}
+            style={{
+              background: "#EEF6E7",
+              color: GREEN,
+              padding: "8px 14px",
+              borderRadius: 999,
+              fontWeight: 700,
+              fontSize: 14,
+            }}
+          >
+            {filtered.length} Cakes
+          </div>
+        </div>
+
+        {/* CAKE GRID */}
+
+        <div className="cake-grid">
+          {filtered.map((cake) => (
+            <div key={cake.id} className="cake-card">
+              {/* COVER IMAGE */}
+
+              <div className="image-wrap">
+                <img
+                  src={cake.images?.[0]}
+                  alt={cake.name}
+                  className="cake-img"
+                />
+
+                <div className="code-badge">
+                  {cake.code}
+                </div>
+              </div>
+              <div
+  style={{
+    position: "absolute",
+    top: 10,
+    right: 10,
+    background: cake.active ? "#16A34A" : "#DC2626",
+    color: "#fff",
+    padding: "5px 10px",
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: 700,
+  }}
+>
+  {cake.active ? "LIVE" : "HIDDEN"}
+</div>
+
+              {/* DETAILS */}
+
+              <div style={{ padding: 14 }}>
+                <h3
+                  style={{
+                    margin: "0 0 6px",
+                    fontSize: 16,
+                    color: "#111827",
+                  }}
+                >
+                  {cake.name}
+                </h3>
+
+                <div
+                  style={{
+                    color: GREEN,
+                    fontWeight: 800,
+                    fontSize: 20,
+                  }}
+                >
+                  ₹{cake.startingPrice}
+                </div>
+
+                <p
+                  style={{
+                    margin: "6px 0",
+                    color: GREY,
+                    fontSize: 13,
+                  }}
+                >
+                  {cake.minWeight} • {cake.serving}
+                </p>
+
+                {/* CATEGORY */}
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 6,
+                    flexWrap: "wrap",
+                    marginTop: 10,
+                  }}
+                >
+                  {cake.categories.map((cat) => (
+                    <div
+                      key={cat}
+                      style={{
+                        background: "#EEF6E7",
+                        color: GREEN,
+                        padding: "4px 10px",
+                        borderRadius: 999,
+                        fontSize: 11,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {cat}
+                    </div>
+                  ))}
+                </div>
+
+                {/* SUB CATEGORY */}
+
+                {cake.subCategories?.length > 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 6,
+                      flexWrap: "wrap",
+                      marginTop: 8,
+                    }}
+                  >
+                    {cake.subCategories.map((sub) => (
+                      <div
+                        key={sub}
+                        style={{
+                          background: "#F3F4F6",
+                          color: "#555",
+                          padding: "4px 10px",
+                          borderRadius: 999,
+                          fontSize: 11,
+                        }}
+                      >
+                        {sub}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* ACTIONS */}
+
+                <div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "repeat(4,1fr)",
+    gap: 8,
+    marginTop: 16,
+  }}
+>
+  <Link
+    href={`/admin/cakes/edit/${cake.id}`}
+    style={{ textDecoration: "none" }}
+  >
+    <button className="editBtn">
+      <Pencil size={16} />
+    </button>
+  </Link>
+
+  <button
+    className="copyBtn"
+    onClick={() => copyCake(cake)}
+    disabled={loadingId === cake.id}
+  >
+    <Copy size={16} />
+  </button>
+
+  <button
+    className="hideBtn"
+    onClick={() => toggleActive(cake)}
+    disabled={loadingId === cake.id}
+  >
+    {cake.active ? (
+      <Eye size={16} />
+    ) : (
+      <EyeOff size={16} />
+    )}
+  </button>
+
+  <button
+    className="deleteBtn"
+    onClick={() => removeCake(cake.id)}
+  >
+    <Trash2 size={16} />
+  </button>
+</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {filtered.length === 0 && (
+          <div
             style={{
               background: "#fff",
               borderRadius: 18,
-              padding: 16,
-              marginTop: 14,
-              boxShadow: "0 4px 14px rgba(0,0,0,.06)",
+              padding: 50,
+              textAlign: "center",
+              color: GREY,
             }}
           >
-            {item.images?.length > 0 && (
-              <img
-                src={item.images[0]}
-                alt=""
-                style={{
-                  width: "100%",
-                  height: 180,
-                  objectFit: "cover",
-                  borderRadius: 12,
-                }}
-              />
-            )}
-
-            <div
+            <Image
+              src="/logo.jpeg"
+              alt="JBF"
+              width={70}
+              height={70}
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginTop: 12,
+                borderRadius: 999,
+                opacity: 0.15,
               }}
-            >
-              <h3
-                style={{
-                  margin: 0,
-                  color: GREEN,
-                }}
-              >
-                {item.code}
-              </h3>
+            />
 
-              <div
-                style={{
-                  background: "#EEF6E7",
-                  color: GREEN,
-                  padding: "5px 10px",
-                  borderRadius: 999,
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              >
-                ₹{item.price}
-              </div>
-            </div>
+            <h3 style={{ marginBottom: 6 }}>
+              No Cakes Found
+            </h3>
 
-            <p
-              style={{
-                margin: "6px 0",
-                color: GREY,
-              }}
-            >
-              {item.name}
+            <p>
+              Try changing category or search code.
             </p>
-
-            <p
-              style={{
-                margin: 0,
-                color: "#9CA3AF",
-                fontSize: 13,
-              }}
-            >
-              Starting Size : {item.size}
-            </p>
-
-            {/* Categories */}
-
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 6,
-                marginTop: 12,
-              }}
-            >
-              {item.categories?.map((c: string) => (
-                <div
-                  key={c}
-                  style={{
-                    background: "#EEF6E7",
-                    color: GREEN,
-                    padding: "6px 10px",
-                    borderRadius: 999,
-                    fontSize: 11,
-                  }}
-                >
-                  {c}
-                </div>
-              ))}
-            </div>
-
-            {/* Flavours */}
-
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 6,
-                marginTop: 10,
-              }}
-            >
-              {item.flavours?.map((f: string) => (
-                <div
-                  key={f}
-                  style={{
-                    background: "#F3F4F6",
-                    color: GREY,
-                    padding: "6px 10px",
-                    borderRadius: 999,
-                    fontSize: 11,
-                  }}
-                >
-                  {f}
-                </div>
-              ))}
-            </div>
-
-            {/* EDIT BUTTON */}
-
-            <button
-              onClick={() => {
-                setEditingId(item.id);
-
-                setCake({
-                  code: item.code,
-                  name: item.name,
-                  price: item.price,
-                  size: item.size,
-                  categories: item.categories,
-                  flavours: item.flavours,
-                  images: [],
-                });
-
-                window.scrollTo({
-                  top: 0,
-                  behavior: "smooth",
-                });
-              }}
-              style={{
-                width: "100%",
-                marginTop: 14,
-                padding: 12,
-                border: "none",
-                borderRadius: 10,
-                background: "#EEF6E7",
-                color: GREEN,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              Edit Cake
-            </button>
-
-            {/* DELETE BUTTON */}
-
-            <button
-              onClick={async () => {
-                if (!confirm("Delete this cake?")) return;
-
-                await deleteCake(item.id);
-                loadCakes();
-              }}
-              style={{
-                width: "100%",
-                marginTop: 10,
-                padding: 12,
-                border: "none",
-                borderRadius: 10,
-                background: "#FEE2E2",
-                color: "#DC2626",
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              Delete Cake
-            </button>
           </div>
-        ))}
+        )}
+
+        {/* GRID END */}
+                {/* LOADING / EMPTY SPACE */}
+
+        <div style={{ height: 20 }} />
+
       </div>
+
+      {/* RESPONSIVE CSS */}
+
+      <style jsx>{`
+        .cake-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 16px;
+        }
+
+        .cake-card {
+          background: #fff;
+          border-radius: 18px;
+          overflow: hidden;
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+          transition: 0.25s;
+        }
+
+        .cake-card:hover {
+          transform: translateY(-3px);
+        }
+
+        .image-wrap {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 1 / 1;
+          overflow: hidden;
+          background: #f3f4f6;
+        }
+
+        .cake-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .code-badge {
+          position: absolute;
+          top: 10px;
+          left: 10px;
+          background: rgba(0, 0, 0, 0.78);
+          color: #fff;
+          padding: 6px 10px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+        }
+          .editBtn,
+.copyBtn,
+.hideBtn,
+.deleteBtn{
+  border:none;
+  height:42px;
+  border-radius:10px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.editBtn{
+  background:#DCFCE7;
+  color:#166534;
+}
+
+.copyBtn{
+  background:#DBEAFE;
+  color:#1D4ED8;
+}
+
+.hideBtn{
+  background:#FEF3C7;
+  color:#92400E;
+}
+
+.deleteBtn{
+  background:#FEE2E2;
+  color:#B91C1C;
+}
+
+        @media (min-width: 900px) {
+          .cake-grid {
+            grid-template-columns: repeat(4, 1fr);
+          }
+        }
+      `}</style>
     </main>
   );
 }
-const input = {
-  width: "100%",
-  padding: 12,
-  marginTop: 8,
-  borderRadius: 10,
+
+/* BUTTON STYLES */
+
+const chip = (active: boolean): React.CSSProperties => ({
+  padding: "9px 15px",
+  borderRadius: 999,
+  border: "none",
+  cursor: "pointer",
+  background: active ? GREEN : "#F3F4F6",
+  color: active ? "#fff" : "#374151",
+  fontWeight: 700,
+  fontSize: 13,
+});
+
+const subChip = (active: boolean): React.CSSProperties => ({
+  padding: "7px 13px",
+  borderRadius: 999,
   border: "1px solid #E5E7EB",
-  outline: "none",
-} as const;
+  cursor: "pointer",
+  background: active ? "#DCFCE7" : "#fff",
+  color: active ? "#166534" : "#555",
+  fontWeight: 600,
+  fontSize: 12,
+});

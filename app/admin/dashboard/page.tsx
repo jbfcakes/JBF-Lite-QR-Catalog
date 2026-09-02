@@ -131,6 +131,10 @@ export default function Dashboard() {
             Cake Manager
           </Link>
 
+          <Link href="/admin/bulk-upload" style={menu}>
+            Bulk Upload
+          </Link>
+
           <div
             style={{
               marginTop: 30,
@@ -139,7 +143,11 @@ export default function Dashboard() {
             }}
           >
             <Link href="/admin/login" style={menu}>
-              Logout
+             Logout
+             </Link>
+
+             <Link href="/admin/visitors" style={menu}>
+             Customer Visitors
             </Link>
           </div>
         </aside>
