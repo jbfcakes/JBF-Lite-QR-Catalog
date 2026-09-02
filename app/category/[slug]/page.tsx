@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { getCategories, getAllCakes } from "../../../lib/getData";
+import { getAllCakes, getCategories } from "../../../lib/getData";
 
 const GREEN = "#5E8F34";
 const BG = "#F8F8F6";

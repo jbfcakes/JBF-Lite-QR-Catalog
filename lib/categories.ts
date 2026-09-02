@@ -5,6 +5,7 @@ import {
   addDoc,
   deleteDoc,
   doc,
+  updateDoc,
 } from "firebase/firestore";
 
 export type Category = {
@@ -24,6 +25,15 @@ export async function getCategories() {
 
 export async function addCategory(data: Category) {
   await addDoc(collection(db, "categories"), data);
+}
+
+export async function addSubCategory(
+  id: string,
+  subs: string[]
+) {
+  await updateDoc(doc(db, "categories", id), {
+    subs,
+  });
 }
 
 export async function deleteCategory(id: string) {

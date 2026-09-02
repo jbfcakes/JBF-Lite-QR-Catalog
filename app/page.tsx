@@ -80,6 +80,7 @@ type Cake = {
   startingPrice: number;
   startingSize: string;
   flavours: string[];
+  keywords: string[];
 };
 
 

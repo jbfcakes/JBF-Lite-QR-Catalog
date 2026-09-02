@@ -25,7 +25,7 @@ export type Cake = {
   minWeight: string;
   serving: string;
   active: boolean;
-  keywords: string[];
+  keywords: [],
 };
 
 function generateKeywords(data: Cake) {
@@ -112,6 +112,7 @@ export async function duplicateCake(cake: Cake) {
     ...cake,
     code,
     name: `${cake.name} Copy`,
+    keywords: [],
   });
 
   return code;

@@ -35,23 +35,29 @@ export default function CategoryManager() {
   async function addCategoryData() {
     if (!newCategory.trim()) return;
 
-    await addCategory(newCategory);
+    await addCategory({
+  name: newCategory,
+  subs: [],
+});
     setNewCategory("");
     loadCategories();
   }
 
   async function addSub(id: string) {
-    const value = subInput[id];
-    if (!value?.trim()) return;
+  const value = subInput[id];
+  if (!value?.trim()) return;
 
-    const cat = categories.find((c) => c.id === id);
-    if (!cat) return;
+  const cat = categories.find((c) => c.id === id);
+  if (!cat) return;
 
-    await addSubCategory(id, [...cat.subs, value]);
+  await addSubCategory(
+  id,
+  [...cat.subs, value]
+);
 
-    setSubInput({ ...subInput, [id]: "" });
-    loadCategories();
-  }
+  setSubInput({ ...subInput, [id]: "" });
+  loadCategories();
+}
 
   async function removeCategory(id: string) {
     await deleteCategory(id);

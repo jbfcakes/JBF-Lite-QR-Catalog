@@ -21,28 +21,14 @@ import {
   updateCake,
 } from "../../../lib/cakes";
 
+import type { Cake } from "../../../lib/cakes";
+
 import { getCategories } from "../../../lib/categories";
 
 const GREEN = "#5E8F34";
 const BG = "#F8F8F6";
 const GREY = "#6B7280";
 
-type Cake = {
-  id: string;
-  code: string;
-  name: string;
-  images: string[];
-
-  categories: string[];
-  subCategories: string[];
-  flavours: string[];
-
-  startingPrice: number;
-  minWeight: string;
-  serving: string;
-
-  active: boolean;
-};
 
 type Category = {
   id: string;
@@ -84,9 +70,9 @@ const [loadingId, setLoadingId] = useState("");
     loadData();
   }
 async function toggleActive(cake: Cake) {
-  setLoadingId(cake.id);
+  setLoadingId(cake.id ?? "");
 
-  await updateCake(cake.id, {
+await updateCake(cake.id!, {
     active: !cake.active,
   });
 
@@ -103,7 +89,7 @@ async function toggleActive(cake: Cake) {
     return cat?.subs || [];
   }, [mainCategory, categories]);
 async function copyCake(cake: Cake) {
-  setLoadingId(cake.id);
+  setLoadingId(cake.id ?? "");
 
   await duplicateCake(cake);
 
@@ -527,7 +513,7 @@ async function copyCake(cake: Cake) {
 
   <button
     className="deleteBtn"
-    onClick={() => removeCake(cake.id)}
+    onClick={() => removeCake(cake.id!)}
   >
     <Trash2 size={16} />
   </button>
